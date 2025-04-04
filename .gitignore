@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Go
+/bin/
+*.exe
+*.test
+*.out
+*.log
+*.sum
+
+# VSCode
+.vscode/
+*.code-workspace
