@@ -1,6 +1,7 @@
 package deepseek
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -8,16 +9,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/reddtsai/goAPP/pkg/ai"
+	"github.com/reddtsai/goAPP/pkg/genai"
 )
 
 type DeepSeekOption func(*DeepSeekOptions)
 
 type DeepSeekOptions struct {
-	BaseURL   string
-	Header    http.Header
-	Model     string
-	MaxTokens int
+	BaseURL string
+	Header  http.Header
+	Model   string
 }
 
 func DefaultOptions() *DeepSeekOptions {
@@ -67,12 +67,12 @@ func NewDeepSeekClient(opts ...DeepSeekOption) *DeepSeekClient {
 type CompletionRequest struct {
 	Messages         []Message      `json:"messages"`
 	Model            string         `json:"model"`
-	FrequencyPenalty float64        `json:"frequency_penalty"`
-	MaxTokens        int            `json:"max_tokens"`
-	PresencePenalty  float64        `json:"presence_penalty"`
+	FrequencyPenalty float32        `json:"frequency_penalty"`
+	MaxTokens        int            `json:"max_tokens,omitempty"`
+	PresencePenalty  float32        `json:"presence_penalty"`
 	ResponseFormat   ResponseFormat `json:"response_format"`
 	// Stop             []string         `json:"stop"`
-	Stream bool `json:"stream"`
+	Stream bool `json:"stream,omitempty"`
 	// StreamOptions    *StreamOptions  `json:"stream_options"`
 	Temperature float32 `json:"temperature"`
 	TopP        float32 `json:"top_p"`
@@ -94,7 +94,8 @@ type ResponseFormat struct {
 type StreamOptions struct {
 }
 
-func (c *DeepSeekClient) Completion(params ai.CompletionParams) (*ai.CompletionResult, error) {
+func (c *DeepSeekClient) Completion(ctx context.Context, params genai.CompletionParams) (*genai.CompletionResult, error) {
+	// TODO
 	// {
 	// 	"messages": [
 	// 	  {
@@ -116,7 +117,7 @@ func (c *DeepSeekClient) Completion(params ai.CompletionParams) (*ai.CompletionR
 	completion := &CompletionRequest{
 		Model:            c.options.Model,
 		FrequencyPenalty: 0,
-		MaxTokens:        c.options.MaxTokens,
+		MaxTokens:        params.MaxOutputTokens,
 		PresencePenalty:  0,
 		ResponseFormat: ResponseFormat{
 			Type: "text",
@@ -156,6 +157,7 @@ func (c *DeepSeekClient) Completion(params ai.CompletionParams) (*ai.CompletionR
 	}
 	fmt.Println(string(body))
 
-	result := &ai.CompletionResult{}
+	// TODO
+	result := &genai.CompletionResult{}
 	return result, nil
 }

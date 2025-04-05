@@ -12,3 +12,6 @@
 # VSCode
 .vscode/
 *.code-workspace
+
+.env
+**/env.sh
