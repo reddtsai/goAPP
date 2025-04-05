@@ -11,37 +11,34 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-
-	"github.com/reddtsai/goAPP/internal/microservices/user"
-	transportHttp "github.com/reddtsai/goAPP/pkg/transport/http"
 )
 
-func init() {
-	HttpCmd.Flags().String("service", "", "The service to run (e.g. 'user')")
-	_ = HttpCmd.MarkFlagRequired("service")
-}
+var (
+	Addr = ":8080"
+)
 
-var HttpCmd = &cobra.Command{
-	Use:   "http",
-	Short: "Run HTTP server for a selected service",
-	RunE: func(cmd *cobra.Command, args []string) error {
-		serviceName, _ := cmd.Flags().GetString("service")
-		if serviceName == "" {
-			return fmt.Errorf("missing required flag: --service")
-		}
-		return runHTTP(context.Background(), serviceName)
-	},
-}
-
-func runHTTP(ctx context.Context, serviceName string) error {
-	router, err := LoadHttpService(ctx, serviceName)
-	if err != nil {
-		return fmt.Errorf("failed to load HTTP service: %w", err)
+func NewHTTPCommand(handler http.Handler) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "http",
+		Short: "Run HTTP server for a selected service",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if handler == nil {
+				return fmt.Errorf("handler is nil")
+			}
+			return runHttp(handler)
+		},
 	}
 
+	cmd.Flags().StringVar(&Addr, "addr", ":8080", "Address to listen on (e.g., :8080)")
+	// _ = cmd.MarkFlagRequired("addr竹手戈")
+
+	return cmd
+}
+
+func runHttp(handler http.Handler) error {
 	srv := &http.Server{
-		Addr:    ":8080",
-		Handler: router,
+		Addr:    Addr,
+		Handler: handler,
 	}
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -52,7 +49,7 @@ func runHTTP(ctx context.Context, serviceName string) error {
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 	<-stop
-	shutdownCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(shutdownCtx); err != nil {
@@ -60,18 +57,4 @@ func runHTTP(ctx context.Context, serviceName string) error {
 	}
 
 	return nil
-}
-
-func LoadHttpService(ctx context.Context, name string) (http.Handler, error) {
-	router := transportHttp.NewRouter(ctx)
-
-	switch name {
-	case "user":
-		userService := user.NewHttpHandler(ctx)
-		userService.RegisterRoutes(router)
-	default:
-		return nil, fmt.Errorf("service %s not found", name)
-	}
-
-	return router, nil
 }
