@@ -48,10 +48,12 @@ func newChatbotHttpService(ctx context.Context) (http.Handler, error) {
 		if err != nil {
 			return nil, err
 		}
-		handler := chatbot.NewHttpServicWithBedrock(ctx, aesCfg, cfg.AwsBedrockAccessKeyID)
+		handler := chatbot.NewHttpServicWithBedrock(ctx, aesCfg, cfg.AwsBedrockModel)
 		handler.RegisterRoutes(router)
 	case "openai":
+		// TODO: Implement OpenAI handler
 	case "deepseek":
+		// TODO: Implement DeepSeek handler
 	default:
 		return nil, fmt.Errorf("unsupported GenAI vendor: %s", cfg.GenAIVendor)
 	}
