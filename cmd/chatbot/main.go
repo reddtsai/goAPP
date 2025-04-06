@@ -2,11 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/reddtsai/goAPP/cmd"
 	"github.com/reddtsai/goAPP/internal/microservices/chatbot"
@@ -14,10 +14,14 @@ import (
 	transportHTTP "github.com/reddtsai/goAPP/pkg/transport/http"
 )
 
-var RootCmd = &cobra.Command{
-	Use:   "chatbot",
-	Short: "Chatbot application",
-}
+var (
+	CONFIG_PATH = "./cmd/chatbot" // --build-arg CONFIG_PATH=
+
+	ROOT_COMMAND = &cobra.Command{
+		Use:   "chatbot",
+		Short: "Chatbot application",
+	}
+)
 
 func main() {
 	ctx := context.Background()
@@ -25,23 +29,31 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error creating chatbot service: %v", err)
 	}
-	RootCmd.AddCommand(cmd.NewHTTPCommand(srv))
-	if err := RootCmd.Execute(); err != nil {
+	ROOT_COMMAND.AddCommand(cmd.NewHTTPCommand(srv))
+	if err := ROOT_COMMAND.Execute(); err != nil {
 		log.Fatalf("Error executing command: %v", err)
 	}
 }
 
 func newChatbotHttpService(ctx context.Context) (http.Handler, error) {
-	v := viper.New()
-	v.AutomaticEnv()
-
-	// TODO
-	router := transportHTTP.NewRouter(ctx)
-	aesCfg, err := awsSDK.LoadConfigWithAKSK(ctx, v.GetString("REGION"), v.GetString("AK"), v.GetString("SK"))
+	cfg, err := LoadConfig(CONFIG_PATH)
 	if err != nil {
 		return nil, err
 	}
-	handler := chatbot.NewHttpServicWithBedrock(ctx, aesCfg, v.GetString("MODEL"))
-	handler.RegisterRoutes(router)
+
+	router := transportHTTP.NewRouter(ctx)
+	switch cfg.GenAIVendor {
+	case "bedrock":
+		aesCfg, err := awsSDK.LoadConfigWithAKSK(ctx, cfg.AwsBedrockRegion, cfg.AwsBedrockAccessKeyID, cfg.AwsBedrockSecretAccessKey)
+		if err != nil {
+			return nil, err
+		}
+		handler := chatbot.NewHttpServicWithBedrock(ctx, aesCfg, cfg.AwsBedrockAccessKeyID)
+		handler.RegisterRoutes(router)
+	case "openai":
+	case "deepseek":
+	default:
+		return nil, fmt.Errorf("unsupported GenAI vendor: %s", cfg.GenAIVendor)
+	}
 	return router, nil
 }
