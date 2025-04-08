@@ -35,13 +35,13 @@ func main() {
 		if err != nil {
 			return nil, err
 		}
+		if resp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("http error: %s", resp.Status)
+		}
 		defer resp.Body.Close()
 		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return nil, err
-		}
-		if resp.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("http error: %s", resp.Status)
 		}
 		var payload WeatherAlert
 		if err := json.Unmarshal(body, &payload); err != nil {
