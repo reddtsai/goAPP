@@ -13,9 +13,10 @@ import (
 type BedrockOption func(*BedrockOptions)
 
 type BedrockOptions struct {
-	AwsCfg      aws.Config
-	Model       string
-	Temperature float32
+	AwsCfg       aws.Config
+	Model        string
+	Temperature  float32
+	SystemPrompt string
 }
 
 func DefaultOptions() *BedrockOptions {
@@ -39,6 +40,12 @@ func WithModel(model string) BedrockOption {
 func WithTemperature(temp float32) BedrockOption {
 	return func(o *BedrockOptions) {
 		o.Temperature = temp
+	}
+}
+
+func WithSystemPrompt(prompt string) BedrockOption {
+	return func(o *BedrockOptions) {
+		o.SystemPrompt = prompt
 	}
 }
 
@@ -72,6 +79,10 @@ func (c *BedrockClient) converse(ctx context.Context, params genai.CompletionPar
 			Temperature: aws.Float32(c.options.Temperature),
 		},
 	}
+	converseInput.System = append(converseInput.System, &bt.SystemContentBlockMemberText{
+		Value: c.options.SystemPrompt,
+	})
+
 	for _, message := range params.Messages {
 		switch message.Role {
 		case genai.ROLE_USER:

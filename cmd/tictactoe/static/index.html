@@ -84,15 +84,32 @@
   <script>
     const evt = new EventSource("/events");
     const log = document.getElementById("log");
-
+  
     evt.onmessage = function(e) {
-      const [player, move] = e.data.trim().split(":");
+      const data = e.data.trim();
+  
+      // 判斷是否為結束訊息
+      if (data === "X win" || data === "O win" || data === "Draw") {
+        alert("遊戲結束：" + data);
+        clearBoard();
+        fetch("/reset", { method: "POST" });
+        return;
+      }
+  
+      const [player, move] = data.split(":");
       const cell = document.getElementById("cell-" + move);
       if (!cell.textContent) {
         cell.textContent = player;
         log.textContent += `${player} : ${move}\n`;
       }
     };
+  
+    function clearBoard() {
+      for (let i = 1; i <= 9; i++) {
+        document.getElementById("cell-" + i).textContent = "";
+      }
+      log.textContent = "";
+    }
   </script>
 </body>
 </html>
