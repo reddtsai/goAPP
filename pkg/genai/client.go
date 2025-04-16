@@ -7,6 +7,7 @@ import (
 const (
 	ROLE_USER      = "user"
 	ROLE_ASSISTANT = "assistant"
+	ROLE_SYSTEM    = "system"
 )
 
 type CompletionParams struct {

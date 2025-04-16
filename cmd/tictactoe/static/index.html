@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>井字棋</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      height: 100vh;
+      display: flex;
+    }
+
+    .left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    h1 {
+      margin-bottom: 1rem;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+    }
+
+    .cell {
+      background: white;
+      border: 2px solid #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      user-select: none;
+      color: black;
+    }
+
+    .right {
+      width: 220px;
+      border-left: 1px solid #ccc;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .log-title {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .log {
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="left">
+    <h1>井字遊戲</h1>
+    <div class="board">
+      <div class="cell" id="cell-1"></div>
+      <div class="cell" id="cell-2"></div>
+      <div class="cell" id="cell-3"></div>
+      <div class="cell" id="cell-4"></div>
+      <div class="cell" id="cell-5"></div>
+      <div class="cell" id="cell-6"></div>
+      <div class="cell" id="cell-7"></div>
+      <div class="cell" id="cell-8"></div>
+      <div class="cell" id="cell-9"></div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="log-title">落子紀錄</div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <script>
+    const evt = new EventSource("/events");
+    const log = document.getElementById("log");
+  
+    evt.onmessage = function(e) {
+      const data = e.data.trim();
+  
+      // 判斷是否為結束訊息
+      if (data === "X win" || data === "O win" || data === "Draw") {
+        alert("遊戲結束：" + data);
+        clearBoard();
+        fetch("/reset", { method: "POST" });
+        return;
+      }
+  
+      const [player, move] = data.split(":");
+      const cell = document.getElementById("cell-" + move);
+      if (!cell.textContent) {
+        cell.textContent = player;
+        log.textContent += `${player} : ${move}\n`;
+      }
+    };
+  
+    function clearBoard() {
+      for (let i = 1; i <= 9; i++) {
+        document.getElementById("cell-" + i).textContent = "";
+      }
+      log.textContent = "";
+    }
+  </script>
+</body>
+</html>
