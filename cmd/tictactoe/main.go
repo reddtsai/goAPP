@@ -80,7 +80,7 @@ func handleMove(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "duplicate move", http.StatusConflict)
 		return
 	}
-	occupied[move] = true
+	occupied[pos] = true
 	gaming = append(gaming, move)
 	moves <- move
 
